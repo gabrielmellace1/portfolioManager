@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Asset } from '../entities/Asset';
 import { Portfolio } from '../entities/Portfolio';
+import { PriceHistory } from '../entities/PriceHistory';
 
 /**
  * Database configuration with environment-based settings
@@ -15,7 +16,7 @@ export const getDatabaseConfig = (): DataSourceOptions => {
     database: isTest ? ':memory:' : process.env.DB_DATABASE || 'portfolio.db',
     synchronize: !isProduction, // Only auto-sync in development
     logging: process.env.DB_LOGGING === 'true',
-    entities: [Asset, Portfolio],
+    entities: [Asset, Portfolio, PriceHistory],
     migrations: isProduction ? ['dist/migrations/*.js'] : undefined,
     migrationsRun: isProduction,
     extra: {

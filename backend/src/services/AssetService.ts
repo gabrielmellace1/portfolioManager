@@ -1,5 +1,6 @@
 import { Asset, AssetType } from '../entities/Asset';
 import { AssetRepository, AssetQueryOptions, AssetSearchOptions } from '../repositories/AssetRepository';
+import { PriceHistoryRepository } from '../repositories/PriceHistoryRepository';
 import { PriceService } from './PriceService';
 import { AppError } from '../errors/AppError';
 import { logger } from '../utils/Logger';
@@ -21,10 +22,12 @@ export interface AssetPerformanceMetrics {
 export class AssetService {
   private assetRepository: AssetRepository;
   private priceService: PriceService;
+  private priceHistoryRepository: PriceHistoryRepository;
 
   constructor(assetRepository: AssetRepository, priceService: PriceService) {
     this.assetRepository = assetRepository;
     this.priceService = priceService;
+    this.priceHistoryRepository = new PriceHistoryRepository();
   }
 
   /**
@@ -241,6 +244,9 @@ export class AssetService {
               break;
             case AssetType.CRYPTO:
               currentPrice = await this.priceService.getCryptoPrice(asset.ticker);
+              if (currentPrice === null) {
+                throw new Error(`Failed to fetch crypto price for ${asset.ticker}`);
+              }
               break;
             case AssetType.OPTION:
               if (!asset.strikePrice || !asset.expirationDate || !asset.optionType) {
@@ -267,6 +273,15 @@ export class AssetService {
           if (!updatedAsset) {
             throw AppError.internal('Failed to update asset price');
           }
+
+          // Store price in history for daily change tracking
+          const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+          await this.priceHistoryRepository.storePrice(
+            id, 
+            currentPrice, 
+            today,
+            { source: 'price_update', timestamp: new Date().toISOString() }
+          );
 
           logger.logService('AssetService', 'updateAssetPrice');
           return updatedAsset;

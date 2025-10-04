@@ -215,9 +215,16 @@ export class PriceService {
         console.log(`Alternative approach also failed for ${symbol}`);
       }
       
-      // Return a default price instead of throwing to prevent crashes
-      console.log(`Returning default crypto price for ${symbol}`);
-      return 1.0; // Default fallback price
+      // Log detailed error information for debugging
+      console.error(`❌ All crypto price fetching methods failed for ${symbol}:`, {
+        symbol,
+        error: error.message,
+        coinGeckoId: this.CRYPTO_SYMBOL_MAP[symbol.toUpperCase()],
+        hasCoinMarketCapKey: !!this.COINMARKETCAP_API_KEY
+      });
+      
+      // Return null instead of 1.0 to indicate failure
+      return null;
     }
   }
 

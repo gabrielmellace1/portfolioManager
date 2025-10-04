@@ -1,5 +1,6 @@
 import { AssetService } from './AssetService';
 import { WebSocketService, PriceUpdateData } from './WebSocketService';
+import { PriceHistoryRepository } from '../repositories/PriceHistoryRepository';
 import { Asset } from '../entities/Asset';
 import { logger } from '../utils/Logger';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor';
@@ -7,6 +8,7 @@ import { PerformanceMonitor } from '../utils/PerformanceMonitor';
 export class PriceUpdateScheduler {
   private assetService: AssetService;
   private webSocketService: WebSocketService;
+  private priceHistoryRepository: PriceHistoryRepository;
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
   private updateInterval: number = 5000; // 5 seconds
@@ -14,6 +16,7 @@ export class PriceUpdateScheduler {
   constructor(assetService: AssetService, webSocketService: WebSocketService) {
     this.assetService = assetService;
     this.webSocketService = webSocketService;
+    this.priceHistoryRepository = new PriceHistoryRepository();
   }
 
   /**
@@ -96,18 +99,34 @@ export class PriceUpdateScheduler {
           // Get updated assets with their new prices
           const updatedAssets = await this.assetService.getAllAssets();
           
-          // Create price update data for WebSocket broadcast
-          const priceUpdates: PriceUpdateData[] = updatedAssets
-            .filter(asset => asset.currentPrice !== undefined)
-            .map(asset => ({
-              assetId: asset.id,
-              ticker: asset.ticker,
-              currentPrice: asset.currentPrice!,
-              previousPrice: asset.purchasePrice, // Using purchase price as previous for now
-              priceChange: asset.currentPrice! - asset.purchasePrice,
-              priceChangePercent: ((asset.currentPrice! - asset.purchasePrice) / asset.purchasePrice) * 100,
-              timestamp: new Date().toISOString()
-            }));
+          // Create price update data for WebSocket broadcast with proper daily change
+          const priceUpdates: PriceUpdateData[] = [];
+          
+          for (const asset of updatedAssets) {
+            if (asset.currentPrice !== undefined) {
+              // Get previous day's price from history
+              const yesterday = new Date();
+              yesterday.setDate(yesterday.getDate() - 1);
+              const yesterdayStr = yesterday.toISOString().split('T')[0];
+              
+              const previousPriceHistory = await this.priceHistoryRepository.getPriceForDate(asset.id, yesterdayStr);
+              const previousPrice = previousPriceHistory?.price || asset.purchasePrice;
+              
+              // Calculate daily change
+              const priceChange = asset.currentPrice! - previousPrice;
+              const priceChangePercent = previousPrice > 0 ? (priceChange / previousPrice) * 100 : 0;
+              
+              priceUpdates.push({
+                assetId: asset.id,
+                ticker: asset.ticker,
+                currentPrice: asset.currentPrice!,
+                previousPrice: previousPrice,
+                priceChange: priceChange,
+                priceChangePercent: priceChangePercent,
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
 
           // Broadcast price updates via WebSocket
           this.webSocketService.broadcastPriceUpdates(priceUpdates);
