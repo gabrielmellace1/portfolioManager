@@ -1,0 +1,16 @@
+{
+  "entryFile": "src/index.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/controllers/*.ts"],
+  "spec": {
+    "outputDirectory": "dist",
+    "specVersion": 3,
+    "name": "Portfolio Visualizer API",
+    "description": "API for managing investment portfolios",
+    "version": "1.0.0",
+    "basePath": "/api"
+  },
+  "routes": {
+    "routesDir": "src/routes"
+  }
+}
