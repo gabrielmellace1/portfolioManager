@@ -21,20 +21,24 @@ export class PriceUpdateScheduler {
    */
   public start(): void {
     if (this.isRunning) {
-      logger.warn('Price update scheduler is already running');
+      logger.warn('⚠️ Price update scheduler is already running');
       return;
     }
 
-    logger.info(`Starting price update scheduler with ${this.updateInterval}ms interval`);
+    logger.info(`🚀 Starting price update scheduler with ${this.updateInterval}ms interval`);
     this.isRunning = true;
 
     // Run immediately on start
+    logger.info('🔄 Running initial price update...');
     this.updatePrices();
 
     // Set up interval for subsequent updates
     this.intervalId = setInterval(() => {
+      logger.info('⏰ Interval triggered - running price update...');
       this.updatePrices();
     }, this.updateInterval);
+    
+    logger.info(`✅ Scheduler started with interval ID: ${this.intervalId}`);
 
     // Broadcast system message
     this.webSocketService.broadcastSystemMessage(
@@ -73,17 +77,17 @@ export class PriceUpdateScheduler {
   private async updatePrices(): Promise<void> {
     return PerformanceMonitor.measureAsync('PriceUpdateScheduler.updatePrices', async () => {
       try {
-        logger.info('Starting scheduled price update');
+        logger.info('🔄 Starting scheduled price update');
         
         // Get all assets that need price updates
         const assets = await this.assetService.getAllAssets();
         
         if (assets.length === 0) {
-          logger.info('No assets found for price update');
+          logger.info('❌ No assets found for price update');
           return;
         }
 
-        logger.info(`Updating prices for ${assets.length} assets`);
+        logger.info(`📊 Updating prices for ${assets.length} assets`);
         
         // Update all asset prices
         const updateResult = await this.assetService.updateAllAssetPrices();
@@ -108,9 +112,9 @@ export class PriceUpdateScheduler {
           // Broadcast price updates via WebSocket
           this.webSocketService.broadcastPriceUpdates(priceUpdates);
           
-          logger.info(`Successfully updated ${updateResult.updated} asset prices and broadcasted to clients`);
+          logger.info(`✅ Successfully updated ${updateResult.updated} asset prices and broadcasted to clients`);
         } else {
-          logger.info('No asset prices were updated');
+          logger.info('⚠️ No asset prices were updated');
         }
 
         // Log any errors that occurred during batch update
@@ -119,7 +123,7 @@ export class PriceUpdateScheduler {
         }
 
       } catch (error) {
-        logger.error('Error during scheduled price update:', { error });
+        logger.error('❌ Error during scheduled price update:', { error });
         
         // Broadcast error to clients
         this.webSocketService.broadcastSystemMessage(
