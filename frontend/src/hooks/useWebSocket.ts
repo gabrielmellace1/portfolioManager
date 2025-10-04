@@ -83,7 +83,8 @@ export const useWebSocket = (url: string = 'http://localhost:3002') => {
     });
 
     newSocket.on('price_updates', (broadcast: PriceUpdateBroadcast) => {
-      console.log('Received price updates:', broadcast.data.length);
+      console.log('🎉 Received price updates:', broadcast.data.length, 'assets');
+      console.log('📊 Price update data:', broadcast.data);
       setPriceUpdates(broadcast.data);
     });
 

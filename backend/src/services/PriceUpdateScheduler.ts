@@ -9,7 +9,7 @@ export class PriceUpdateScheduler {
   private webSocketService: WebSocketService;
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
-  private updateInterval: number = 30000; // 30 seconds
+  private updateInterval: number = 5000; // 5 seconds
 
   constructor(assetService: AssetService, webSocketService: WebSocketService) {
     this.assetService = assetService;
@@ -38,7 +38,7 @@ export class PriceUpdateScheduler {
 
     // Broadcast system message
     this.webSocketService.broadcastSystemMessage(
-      'Price update scheduler started - prices will be updated every 30 seconds',
+      'Price update scheduler started - prices will be updated every 5 seconds',
       'info'
     );
   }

@@ -131,7 +131,7 @@ export const PriceUpdateDisplay: React.FC<PriceUpdateDisplayProps> = ({ classNam
           </div>
           <p className="text-sm">
             {status.connected 
-              ? 'Price updates will appear here every 30 seconds'
+              ? 'Price updates will appear here every 5 seconds'
               : 'Connect to see real-time price updates'
             }
           </p>

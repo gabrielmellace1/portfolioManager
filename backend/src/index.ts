@@ -170,7 +170,7 @@ AppDataSource.initialize()
       
       // Start the price update scheduler
       priceUpdateScheduler.start();
-      logger.info('Price update scheduler started - prices will be updated every 30 seconds');
+      logger.info('Price update scheduler started - prices will be updated every 5 seconds');
     });
   })
   .catch((error) => {
