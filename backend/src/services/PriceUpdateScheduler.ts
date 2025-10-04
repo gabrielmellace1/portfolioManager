@@ -79,7 +79,7 @@ export class PriceUpdateScheduler {
       try {
         logger.info('🔄 Starting scheduled price update');
         
-        // Get all assets that need price updates
+        // Get all assets for price updates
         const assets = await this.assetService.getAllAssets();
         
         if (assets.length === 0) {

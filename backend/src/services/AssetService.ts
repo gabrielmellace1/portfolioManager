@@ -287,7 +287,7 @@ export class AssetService {
   async updateAllAssetPrices(): Promise<{ updated: number; failed: number; errors: string[] }> {
     return PerformanceMonitor.measureAsync('AssetService.updateAllAssetPrices', async () => {
       try {
-        const assets = await this.assetRepository.findAssetsNeedingPriceUpdate();
+        const assets = await this.assetRepository.findAll();
         let updated = 0;
         let failed = 0;
         const errors: string[] = [];

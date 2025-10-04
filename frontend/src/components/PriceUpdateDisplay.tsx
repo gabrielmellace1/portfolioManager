@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { TrendingUp, TrendingDown, Wifi, WifiOff, AlertCircle } from 'lucide-react';
+import { assetApi } from '../services/api';
 
 interface PriceUpdateDisplayProps {
   className?: string;
@@ -8,6 +9,24 @@ interface PriceUpdateDisplayProps {
 
 export const PriceUpdateDisplay: React.FC<PriceUpdateDisplayProps> = ({ className = '' }) => {
   const { status, priceUpdates, systemMessages } = useWebSocket();
+  const [initialAssets, setInitialAssets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch initial assets on component mount
+  useEffect(() => {
+    const fetchInitialAssets = async () => {
+      try {
+        const assets = await assetApi.getAll();
+        setInitialAssets(assets);
+      } catch (error) {
+        console.error('Failed to fetch initial assets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialAssets();
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -115,26 +134,60 @@ export const PriceUpdateDisplay: React.FC<PriceUpdateDisplayProps> = ({ classNam
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          <div className="mb-2">
-            {status.connected ? (
-              <div className="text-green-600">
-                <Wifi className="w-8 h-8 mx-auto mb-2" />
-                <p>Waiting for price updates...</p>
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">
+            Current Prices ({initialAssets.length} assets)
+          </h4>
+          {loading ? (
+            <div className="text-center py-4 text-gray-500">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-2 text-sm">Loading assets...</p>
+            </div>
+          ) : initialAssets.length > 0 ? (
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {initialAssets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="font-medium text-gray-800">{asset.ticker}</div>
+                    <div className="text-sm text-gray-600">
+                      {formatPrice(asset.currentPrice || asset.purchasePrice)}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <div className="text-xs text-gray-500">
+                      {asset.currentPrice ? 'Live' : 'Static'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <div className="mb-2">
+                {status.connected ? (
+                  <div className="text-green-600">
+                    <Wifi className="w-8 h-8 mx-auto mb-2" />
+                    <p>Waiting for price updates...</p>
+                  </div>
+                ) : (
+                  <div className="text-red-600">
+                    <WifiOff className="w-8 h-8 mx-auto mb-2" />
+                    <p>Not connected to price updates</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-red-600">
-                <WifiOff className="w-8 h-8 mx-auto mb-2" />
-                <p>Not connected to price updates</p>
-              </div>
-            )}
-          </div>
-          <p className="text-sm">
-            {status.connected 
-              ? 'Price updates will appear here every 5 seconds'
-              : 'Connect to see real-time price updates'
-            }
-          </p>
+              <p className="text-sm">
+                {status.connected 
+                  ? 'Price updates will appear here every 5 seconds'
+                  : 'Connect to see real-time price updates'
+                }
+              </p>
+            </div>
+          )}
         </div>
       )}
 
