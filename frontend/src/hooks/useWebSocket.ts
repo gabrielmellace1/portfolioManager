@@ -29,7 +29,7 @@ export interface WebSocketStatus {
   error: string | null;
 }
 
-export const useWebSocket = (url: string = 'http://localhost:3001') => {
+export const useWebSocket = (url: string = 'http://localhost:3002') => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [status, setStatus] = useState<WebSocketStatus>({
     connected: false,
